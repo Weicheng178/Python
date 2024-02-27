@@ -56,6 +56,7 @@ st.subheader('About Me')
 st.write('I am a Data Scientist with a background in Business and Datascience.  n\
     From data engineering to Business Intelligence, always looking for new opportunities and insights')
 
+st.divider()
 
 # 以下是侧边栏小部件区域
 
@@ -68,9 +69,9 @@ option1 = st.sidebar.multiselect(
 # 时间小部件
 first_day = datetime.date(2019, 1, 1)
 last_day = datetime.date(2019, 3, 31)
-d = st.sidebar.date_input(
+date_value = st.sidebar.date_input( 
     "Date",
-    (first_day, datetime.date(2019, 1, 1)),
+    (first_day, last_day),
     first_day,
     last_day,
     format="MM/DD/YYYY",
@@ -92,20 +93,34 @@ option3 = st.sidebar.multiselect(
 
 
 # 以下是右边DashBody部分
-col = st.columns([3, 1])
+#--------------------zc Part-------------------------------------------
 
+col = st.columns([3, 1])
 # 第一列数据
 with col[0]:
-    
-    st.header("Column 1")
-    st.write("This is some content in column 1.")
-
     # 在第一列中创建三个子容器
     col_sub = st.columns([2, 2.2, 1])
-    col_sub[0].metric("Total sales", "€420")
-    col_sub[1].metric("Total revenue", "€420")
-    col_sub[2].metric("Avg rating", "7.8")
-    
+
+    # 处理筛选栏部分数据
+    data = load_data()
+    data["Date"] = pd.to_datetime(data["Date"])
+    # catch the error when filtering
+    try:
+        mask = (data["Date"]>= pd.to_datetime(date_value[0]) ) & (data["Date"]<= pd.to_datetime(date_value[1])) & (data["City"].isin(option1) ) & (data["Customer type"].isin(option2) ) & (data["Gender"].isin(option3) )
+        lastest_data = data[mask]
+        col_sub[0].metric("💵Total sales", f"${round(lastest_data['Total'].sum())}")
+        col_sub[1].metric("💰Total revenue", f"${round(lastest_data['gross income'].sum())}")
+        col_sub[2].metric("🎗Avg rating", round(lastest_data['Rating'].mean(),2 ))
+
+    except Exception as e:
+        print("something wrong")
+        # st.write(e)    # just for debug
+
+        # when selecting data, give a loading
+        # with st.spinner('Wait for it...'):
+        #     time.sleep(15)
+        
+#----------------------zc Part---------------------------------------
     
     
     # 折线图
@@ -167,39 +182,120 @@ with col[0]:
     st.image(buf, use_column_width=True)
     
 
-sales_rank_data = {"Product1": "€420", "Product2": "€420", "Product3": "€420",
-                   "Product4": "€420", "Product5": "€420", "Product6": "€420"}
-revenue_rank_data = {"Product1": "€420", "Product2": "€420", "Product3": "€420",
-                   "Product4": "€420", "Product5": "€420", "Product6": "€420"}
-rating_rank_data = {"Product1": "€420", "Product2": "€420", "Product3": "€420",
-                   "Product4": "€420", "Product5": "€420", "Product6": "€420"}
 
+
+#----------------------zc Part---------------------------------------
 # 第二列数据
 with col[1]:
-    st.header("Column 2")
-    st.write("This is some content in column 2.")
     
     # 使用Column 2来放置三个排名栏目
     st.subheader("Sales Rank")
-    for product, value in sales_rank_data.items():
-        st.text(f"{product}: {value}")
+    # 处理筛选栏部分数据
+    data = load_data()
+    data["Date"] = pd.to_datetime(data["Date"])
+    # catch the error when filtering
+    try:
+        # filter the data
+        mask = (data["Date"]>= pd.to_datetime(date_value[0]) ) & (data["Date"]<= pd.to_datetime(date_value[1])) & (data["City"].isin(option1) ) & (data["Customer type"].isin(option2) ) & (data["Gender"].isin(option3) )
+        lastest_data = data[mask]
+        # Sort the data
+        plot_data = lastest_data.groupby("Product line")["Total"].sum().reset_index().sort_values(by='Total', ascending=False)
+
+        container = st.container(border=True)
+        
+        # provide a better UI for ranking
+        index_count = 0
+        for index, row in plot_data.iterrows():
+            if index_count == 0:
+                color = "#339900"
+                icont = "🥇"
+            elif index_count == 5:
+                color = "#FF3300"
+                icont = ""
+            else:
+                color = "#000000"
+                icont= ""
+            container.write(f"{icont}<span style='color:{color};font-weight:bold;font-size:14px;'>{row['Product line']}:</span><span style='font-size:14px;float:right;color:{color};'>${round(row['Total'])}</span>",unsafe_allow_html=True)
+            index_count = index_count + 1
+
+
+    except Exception as e:
+        print("something wrong")
+        # st.write(plot_data)    # just for debug
+        
 
     # 插入空行对其
-    for _ in range(3): 
-        st.text("")
+    st.divider()
     
     st.subheader("Revenue Rank")
-    for product, value in revenue_rank_data.items():
-        st.text(f"{product}: {value}")
+    # 处理筛选栏部分数据
+    data = load_data()
+    data["Date"] = pd.to_datetime(data["Date"])
+    # catch the error when filtering
+    try:
+        # filter the data
+        mask = (data["Date"]>= pd.to_datetime(date_value[0]) ) & (data["Date"]<= pd.to_datetime(date_value[1])) & (data["City"].isin(option1) ) & (data["Customer type"].isin(option2) ) & (data["Gender"].isin(option3) )
+        lastest_data = data[mask]
+        # Sort the data
+        plot_data = lastest_data.groupby("Product line")["gross income"].sum().reset_index().sort_values(by='gross income', ascending=False)
+
+        container = st.container(border=True)
+        
+        # provide a better UI for ranking
+        index_count = 0
+        for index, row in plot_data.iterrows():
+            if index_count == 0:
+                color = "#339900"
+                icont = "🥇"
+            elif index_count == 5:
+                color = "#FF3300"
+                icont = ""
+            else:
+                color = "#000000"
+                icont= ""
+            container.write(f"{icont}<span style='color:{color};font-weight:bold;font-size:14px;'>{row['Product line']}:</span><span style='font-size:14px;float:right;color:{color};'>${round(row['gross income'])}</span>",unsafe_allow_html=True)
+            index_count = index_count + 1
+
+
+    except Exception as e:
+        print("something wrong")
+        # st.write(plot_data)    # just for debug
+        
         
     # 插入空行对其
-    for _ in range(3): 
-        st.text("")
+    st.divider()
 
     st.subheader("Rating Rank")
-    for product, value in rating_rank_data.items():
-        st.text(f"{product}: {value}")
+    data = load_data()
+    data["Date"] = pd.to_datetime(data["Date"])
+    # catch the error when filtering
+    try:
+        # filter the data
+        mask = (data["Date"]>= pd.to_datetime(date_value[0]) ) & (data["Date"]<= pd.to_datetime(date_value[1])) & (data["City"].isin(option1) ) & (data["Customer type"].isin(option2) ) & (data["Gender"].isin(option3) )
+        lastest_data = data[mask]
+        # Sort the data
+        plot_data = lastest_data.groupby("Product line")["Rating"].mean().reset_index().sort_values(by='Rating', ascending=False)
+
+        container = st.container(border=True)
         
-    # 插入空行对其
-    for _ in range(3): 
-        st.text("")
+        # provide a better UI for ranking
+        index_count = 0
+        for index, row in plot_data.iterrows():
+            if index_count == 0:
+                color = "#339900"
+                icont = "🥇"
+            elif index_count == 5:
+                color = "#FF3300"
+                icont = ""
+            else:
+                color = "#000000"
+                icont= ""
+            container.write(f"{icont}<span style='color:{color};font-weight:bold;font-size:14px;'>{row['Product line']}:</span><span style='font-size:14px;float:right;color:{color};'>{round(row['Rating'],2)}</span>",unsafe_allow_html=True)
+            index_count = index_count + 1
+
+
+    except Exception as e:
+        print("something wrong")
+        # st.write(plot_data)    # just for debug
+        
+#----------------------zc Part---------------------------------------
