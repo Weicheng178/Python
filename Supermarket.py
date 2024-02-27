@@ -5,7 +5,9 @@ import time
 import plotly.express as px
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from wordcloud import WordCloud
 import datetime 
+from io import BytesIO
 
 
 # 设置页面的标题的图标
@@ -111,7 +113,7 @@ with col[0]:
     df['Date'] = pd.to_datetime(df['Date'])
     
     grouped_sales = df.groupby([df['Date'].dt.to_period('M'), 'Customer type'])['Total'].sum().unstack()
-    grouped_sales = grouped_sales.fillna(0)  # 用0填充NaN值
+    grouped_sales = grouped_sales.fillna(0) 
     grouped_sales.index = grouped_sales.index.to_timestamp()
     
     st.title('Sales Trend Visualization')
@@ -146,8 +148,23 @@ with col[0]:
     df = load_data()
     filtered_df = filter_customers(customer_type, df)
     
-    # 显示表格
     st.dataframe(filtered_df)
+    
+    
+    
+    
+    #词云显示
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(' '.join(df['Product line']))
+    
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")
+    plt.tight_layout(pad=0)
+    
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    buf.seek(0)
+    st.image(buf, use_column_width=True)
     
 
 sales_rank_data = {"Product1": "€420", "Product2": "€420", "Product3": "€420",
