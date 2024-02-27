@@ -121,7 +121,8 @@ with col[0]:
         #     time.sleep(15)
         
 #----------------------zc Part---------------------------------------
-    
+    # 分隔符
+    st.divider()
     
     # 折线图
     df = load_data()
@@ -131,7 +132,7 @@ with col[0]:
     grouped_sales = grouped_sales.fillna(0) 
     grouped_sales.index = grouped_sales.index.to_timestamp()
     
-    st.title('Sales Trend Visualization')
+    st.header('Sales Trend Visualization')
     
     fig, ax = plt.subplots(figsize=(10, 6))  
     
@@ -152,7 +153,8 @@ with col[0]:
     st.pyplot(fig)
 
 
-    
+    # 分隔符
+    st.divider()
 
     # 表格打印
     st.header('Customer segmentation')
@@ -165,7 +167,8 @@ with col[0]:
     
     st.dataframe(filtered_df)
     
-    
+    # 分隔符
+    st.divider()
     
     
     #词云显示
