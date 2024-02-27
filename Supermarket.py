@@ -4,8 +4,7 @@ import numpy as np
 import time
 import plotly.express as px
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import datetime 
+import datetime
 
 
 # 设置页面的标题的图标
@@ -14,36 +13,6 @@ st.set_page_config(
     page_icon="👋",
     layout="wide"
 )
-
-# 敏感客户和风险客户分析表格
-def filter_customers(customer_type, df):
-    
-    total_25th_percentile = df['Total'].quantile(0.25)
-    total_75th_percentile = df['Total'].quantile(0.75)
-    
-    if customer_type == 'Total Customer':
-        # 展示所有客户
-        filtered_df = df
-    elif customer_type == 'Sensitive Customer':
-        # 展示敏感客户
-        filtered_df = df[(df['Rating'] > 7) & 
-                         (df['Customer type'] == 'Member') & 
-                         (df['Total'] >= total_75th_percentile)]
-    else:
-        # 展示风险客户
-        filtered_df = df[(df['Rating'] < 5) & 
-                         (df['Customer type'] == 'Normal') & 
-                         (df['Total'] <= total_25th_percentile)]
-        
-    filtered_df = filtered_df.sort_values(by='Total', ascending=False)
-    return filtered_df
-        
-
-# 打印原表格
-@st.cache_data
-def load_data():
-    df = pd.read_csv('data/supermarket_sales_raw.csv')
-    return df
 
 
 # 设置主题
@@ -66,9 +35,9 @@ option1 = st.sidebar.multiselect(
 # 时间小部件
 first_day = datetime.date(2019, 1, 1)
 last_day = datetime.date(2019, 3, 31)
-d = st.sidebar.date_input(
+date_value = st.sidebar.date_input( 
     "Date",
-    (first_day, datetime.date(2019, 1, 1)),
+    (first_day, last_day),
     first_day,
     last_day,
     format="MM/DD/YYYY",
@@ -87,67 +56,67 @@ option3 = st.sidebar.multiselect(
     ['Male', 'Female'])
 
 
-
-
 # 以下是右边DashBody部分
-col = st.columns([3, 1])
+@st.cache_data
+def load_data():
+    df = pd.read_csv('data/supermarket_sales_raw.csv')
+    return df
 
+#--------------------zc Part-------------------------------------------
+
+col = st.columns([3, 1])
 # 第一列数据
 with col[0]:
-    
-    st.header("Column 1")
-    st.write("This is some content in column 1.")
-
     # 在第一列中创建三个子容器
     col_sub = st.columns([2, 2.2, 1])
-    col_sub[0].metric("Total sales", "€420")
-    col_sub[1].metric("Total revenue", "€420")
-    col_sub[2].metric("Avg rating", "7.8")
+
+    # 处理筛选栏部分数据
+    data = load_data()
+    data["Date"] = pd.to_datetime(data["Date"])
+    # catch the error when filtering
+    try:
+        mask = (data["Date"]>= pd.to_datetime(date_value[0]) ) & (data["Date"]<= pd.to_datetime(date_value[1])) & (data["City"].isin(option1) ) & (data["Customer type"].isin(option2) ) & (data["Gender"].isin(option3) )
+        lastest_data = data[mask]
+        col_sub[0].metric("💵Total sales", f"${round(lastest_data['Total'].sum())}")
+        col_sub[1].metric("💰Total revenue", f"${round(lastest_data['gross income'].sum())}")
+        col_sub[2].metric("🎗Avg rating", round(lastest_data['Rating'].mean(),2 ))
+
+    except Exception as e:
+        # print("something wrong")
+        # st.write(e)    # just for debug
+
+        # when selecting data, give a loading
+        with st.spinner('Wait for it...'):
+            time.sleep(15)
+        
+#----------------------zc Part---------------------------------------
+    
     
     
     
     # 折线图
-    df = load_data()
-    df['Date'] = pd.to_datetime(df['Date'])
-    
-    grouped_sales = df.groupby([df['Date'].dt.to_period('M'), 'Customer type'])['Total'].sum().unstack()
-    grouped_sales = grouped_sales.fillna(0)  # 用0填充NaN值
-    grouped_sales.index = grouped_sales.index.to_timestamp()
-    
-    st.title('Sales Trend Visualization')
-    
-    fig, ax = plt.subplots(figsize=(10, 6))  
-    
-    ax.plot(grouped_sales.index, grouped_sales['Member'], label='Member', color='blue')
-    ax.plot(grouped_sales.index, grouped_sales['Normal'], label='Normal', color='green')
-    
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b'))
-    ax.xaxis.set_major_locator(mdates.MonthLocator())
-    plt.xticks(rotation=45)
-    
-    ax.set_xlabel('Month', fontsize=12)
-    ax.set_ylabel('Total Revenue', fontsize=12)
-    ax.set_title('Monthly Sales Trend', fontsize=16)
-    ax.tick_params(axis='both', which='major', labelsize=10) 
-
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
-    
-    st.pyplot(fig)
-
-
-    
+    placeholder = st.empty()
+    placeholder.line_chart({"data": [1, 5, 2, 6]})
 
     # 表格打印
     st.header('Customer segmentation')
+    customer_type = st.radio("Choose a Customer Type",
+                             ['Sensitive Customer', 'Risk Customer'])
     
-    options = ["Total Customer",'Sensitive Customer','Risk Customer']
-    customer_type = st.radio("Choose a Customer Type", options)
+    # 根据所选的客户类型执行不同的操作
+    if customer_type == 'Sensitive Customer':
+        # 对于敏感客户的数据处理
+        data = np.random.randn(4, 10)
+    else:
+        # 对于风险客户的数据处理
+        data = np.random.randn(4, 10) 
     
+    # 调用load_data方法创建一个DataFrame
     df = load_data()
-    filtered_df = filter_customers(customer_type, df)
     
     # 显示表格
-    st.dataframe(filtered_df)
+    st.dataframe(df)
+
     
 
 sales_rank_data = {"Product1": "€420", "Product2": "€420", "Product3": "€420",
@@ -159,30 +128,114 @@ rating_rank_data = {"Product1": "€420", "Product2": "€420", "Product3": "€
 
 # 第二列数据
 with col[1]:
-    st.header("Column 2")
-    st.write("This is some content in column 2.")
     
     # 使用Column 2来放置三个排名栏目
     st.subheader("Sales Rank")
-    for product, value in sales_rank_data.items():
-        st.text(f"{product}: {value}")
+    # 处理筛选栏部分数据
+    data = load_data()
+    data["Date"] = pd.to_datetime(data["Date"])
+    # catch the error when filtering
+    try:
+        # filter the data
+        mask = (data["Date"]>= pd.to_datetime(date_value[0]) ) & (data["Date"]<= pd.to_datetime(date_value[1])) & (data["City"].isin(option1) ) & (data["Customer type"].isin(option2) ) & (data["Gender"].isin(option3) )
+        lastest_data = data[mask]
+        # Sort the data
+        plot_data = lastest_data.groupby("Product line")["Total"].sum().reset_index().sort_values(by='Total', ascending=False)
+
+        container = st.container(border=True)
+        
+        # provide a better UI for ranking
+        index_count = 0
+        for index, row in plot_data.iterrows():
+            if index_count == 0:
+                color = "#339900"
+                icont = "🥇"
+            elif index_count == 5:
+                color = "#FF3300"
+                icont = ""
+            else:
+                color = "#000000"
+                icont= ""
+            container.write(f"{icont}<span style='color:{color};font-weight:bold;font-size:14px;'>{row['Product line']}:</span><span style='font-size:14px;float:right;color:{color};'>${round(row['Total'])}</span>",unsafe_allow_html=True)
+            index_count = index_count + 1
+
+
+    except Exception as e:
+        print("something wrong")
+        # st.write(plot_data)    # just for debug
+        
 
     # 插入空行对其
-    for _ in range(3): 
-        st.text("")
+    st.divider()
     
     st.subheader("Revenue Rank")
-    for product, value in revenue_rank_data.items():
-        st.text(f"{product}: {value}")
+    # 处理筛选栏部分数据
+    data = load_data()
+    data["Date"] = pd.to_datetime(data["Date"])
+    # catch the error when filtering
+    try:
+        # filter the data
+        mask = (data["Date"]>= pd.to_datetime(date_value[0]) ) & (data["Date"]<= pd.to_datetime(date_value[1])) & (data["City"].isin(option1) ) & (data["Customer type"].isin(option2) ) & (data["Gender"].isin(option3) )
+        lastest_data = data[mask]
+        # Sort the data
+        plot_data = lastest_data.groupby("Product line")["gross income"].sum().reset_index().sort_values(by='gross income', ascending=False)
+
+        container = st.container(border=True)
+        
+        # provide a better UI for ranking
+        index_count = 0
+        for index, row in plot_data.iterrows():
+            if index_count == 0:
+                color = "#339900"
+                icont = "🥇"
+            elif index_count == 5:
+                color = "#FF3300"
+                icont = ""
+            else:
+                color = "#000000"
+                icont= ""
+            container.write(f"{icont}<span style='color:{color};font-weight:bold;font-size:14px;'>{row['Product line']}:</span><span style='font-size:14px;float:right;color:{color};'>${round(row['gross income'])}</span>",unsafe_allow_html=True)
+            index_count = index_count + 1
+
+
+    except Exception as e:
+        print("something wrong")
+        # st.write(plot_data)    # just for debug
+        
         
     # 插入空行对其
-    for _ in range(3): 
-        st.text("")
+    st.divider()
 
     st.subheader("Rating Rank")
-    for product, value in rating_rank_data.items():
-        st.text(f"{product}: {value}")
+    data = load_data()
+    data["Date"] = pd.to_datetime(data["Date"])
+    # catch the error when filtering
+    try:
+        # filter the data
+        mask = (data["Date"]>= pd.to_datetime(date_value[0]) ) & (data["Date"]<= pd.to_datetime(date_value[1])) & (data["City"].isin(option1) ) & (data["Customer type"].isin(option2) ) & (data["Gender"].isin(option3) )
+        lastest_data = data[mask]
+        # Sort the data
+        plot_data = lastest_data.groupby("Product line")["Rating"].mean().reset_index().sort_values(by='Rating', ascending=False)
+
+        container = st.container(border=True)
         
-    # 插入空行对其
-    for _ in range(3): 
-        st.text("")
+        # provide a better UI for ranking
+        index_count = 0
+        for index, row in plot_data.iterrows():
+            if index_count == 0:
+                color = "#339900"
+                icont = "🥇"
+            elif index_count == 5:
+                color = "#FF3300"
+                icont = ""
+            else:
+                color = "#000000"
+                icont= ""
+            container.write(f"{icont}<span style='color:{color};font-weight:bold;font-size:14px;'>{row['Product line']}:</span><span style='font-size:14px;float:right;color:{color};'>{round(row['Rating'],2)}</span>",unsafe_allow_html=True)
+            index_count = index_count + 1
+
+
+    except Exception as e:
+        print("something wrong")
+        # st.write(plot_data)    # just for debug
+        
