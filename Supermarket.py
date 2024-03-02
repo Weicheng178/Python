@@ -46,7 +46,7 @@ st.header('Nourishing Your Lifestyle, Cultivating Community Growth')
 st.write('''This data set includes the sales data of a supermarket in Yangon, 
          Naypyitaw and Mandalay in Myanmar in the past three months. By analyzing this dataset, 
          l want to explore the impact of diferent factors on customer consumption and understand 
-         customersconsumption habits, so as to guide the supermarket's operational strategies and increase sales.''')
+         customersconsumption habits, so as to guide the supermarket's operational strategies and increase sales''')
 
 st.divider()
 
@@ -112,7 +112,7 @@ with col[0]:
 
     # Show wordcloud 
     df = load_data()
-    wordcloud = WordCloud(width=750, height=400, background_color='white').generate(' '.join(df['Product line']))
+    wordcloud = WordCloud(width=770, height=400, background_color='white').generate(' '.join(df['Product line']))
     
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
@@ -135,7 +135,7 @@ with col[0]:
     
     st.header('Sales Trend Visualization')
     
-    fig, ax = plt.subplots(figsize=(10, 5.1), facecolor='white')
+    fig, ax = plt.subplots(figsize=(9, 5.15), facecolor='white')
     ax.set_facecolor('white')
     
     ax.plot(grouped_sales.index, grouped_sales['Member'], label='Member', color='red', linestyle='--')
@@ -167,14 +167,14 @@ with col[0]:
 options = {
 'Low-value customers': 'The quantity of goods purchased in a single transaction is exceeds 50% of other customers, the profit is lower than 50% of other customers',
 'High-value customers': 'The quantity of goods purchased in a single transaction is less than 50% of other customers, but the profit is greater than 50% of other customers',
-'High-risk customers': 'The total sales exceeding 50% of other customers, but with a rating below 5.0.'
+'High-risk customers': 'The total sales exceeding 50% of other customers, but with a rating below 5.0'
 }
 
 st.header('Customer segmentation')
 
 col1, col2 = st.columns([0.6, 1])
 with col1:  
-    customer_type = st.radio("Select a specific audience", list(options.keys()))
+    customer_type = st.radio("**Select a specific audience**", list(options.keys()))
     
 with col2:
     df = load_data()
