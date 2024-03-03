@@ -45,7 +45,7 @@ st.title('🥇 CamboMarket')
 st.header('Nourishing Your Lifestyle, Cultivating Community Growth')
 st.write('''This data set includes the sales data of a supermarket in Yangon, 
          Naypyitaw and Mandalay in Myanmar in the past three months. By analyzing this dataset, 
-         l want to explore the impact of diferent factors on customer consumption and understand 
+         we want to explore the impact of diferent factors on customer consumption and understand 
          customersconsumption habits, so as to guide the supermarket's operational strategies and increase sales''')
 
 st.divider()
@@ -69,8 +69,8 @@ date_value = st.sidebar.date_input(
 
 option2 = st.sidebar.multiselect(
     'Membership',
-    ['Member', 'Normal'],
-    ['Member', 'Normal'])
+    ['Member', 'Visitor'],
+    ['Member', 'Visitor'])
 
 option3 = st.sidebar.multiselect(
     'Gender',
@@ -139,7 +139,7 @@ with col[0]:
     ax.set_facecolor('white')
     
     ax.plot(grouped_sales.index, grouped_sales['Member'], label='Member', color='red', linestyle='--')
-    ax.plot(grouped_sales.index, grouped_sales['Normal'], label='Normal', color='green', linestyle='--')
+    ax.plot(grouped_sales.index, grouped_sales['Visitor'], label='Visitor', color='green', linestyle='--')
     
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b'))
     ax.xaxis.set_major_locator(mdates.MonthLocator())
